@@ -12,10 +12,14 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+      naming:
+        # Legacy schema uses camelCase columns (userEmail), not user_email
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+        globally_quoted_identifiers: true
 
 memcached:
   active:

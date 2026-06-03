@@ -33,7 +33,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserDto> findAll() {
-        return userRepository.findAll().stream().map(UserMapper::toDto).toList();
+        return userRepository.findAllWithRoles().stream().map(UserMapper::toDto).toList();
     }
 
     @Transactional(readOnly = true)
