@@ -7,6 +7,10 @@ spring:
   cloud:
     gateway:
       routes:
+        - id: root-welcome
+          uri: forward:///welcome
+          predicates:
+            - Path=/
         - id: user-service
           uri: ${USER_SERVICE_URL:http://localhost:8081}
           predicates:
