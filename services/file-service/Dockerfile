@@ -3,7 +3,8 @@ WORKDIR /app
 COPY pom.xml .
 COPY common/common-dto common/common-dto
 COPY services/file-service services/file-service
-RUN mvn -q -f common/common-dto/pom.xml install -DskipTests \
+RUN mvn -q install -N -DskipTests \
+    && mvn -q -f common/common-dto/pom.xml install -DskipTests \
     && mvn -q -f services/file-service/pom.xml package -DskipTests
 
 FROM eclipse-temurin:17-jre
