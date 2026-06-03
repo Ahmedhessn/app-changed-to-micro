@@ -1,5 +1,7 @@
 server:
   port: 8081
+  error:
+    include-message: always
 
 spring:
   application:
@@ -28,6 +30,10 @@ memcached:
   standby:
     host: ${MEMCACHED_STANDBY_HOST:127.0.0.2}
     port: ${MEMCACHED_STANDBY_PORT:11211}
+
+logging:
+  level:
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
 
 management:
   endpoints:

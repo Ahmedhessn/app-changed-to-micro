@@ -13,25 +13,39 @@ public class User implements Serializable {
     private Long id;
     private String username;
     private String password;
+    @Column(name = "userEmail")
     private String userEmail;
     @Transient
     private String passwordConfirm;
+    @Column(name = "profileImg")
     private String profileImg;
+    @Column(name = "profileImgPath")
     private String profileImgPath;
+    @Column(name = "dateOfBirth")
     private String dateOfBirth;
+    @Column(name = "fatherName")
     private String fatherName;
+    @Column(name = "motherName")
     private String motherName;
     private String gender;
+    @Column(name = "maritalStatus")
     private String maritalStatus;
+    @Column(name = "permanentAddress")
     private String permanentAddress;
+    @Column(name = "tempAddress")
     private String tempAddress;
+    @Column(name = "primaryOccupation")
     private String primaryOccupation;
+    @Column(name = "secondaryOccupation")
     private String secondaryOccupation;
     private String skills;
+    @Column(name = "phoneNumber")
     private String phoneNumber;
+    @Column(name = "secondaryPhoneNumber")
     private String secondaryPhoneNumber;
     private String nationality;
     private String language;
+    @Column(name = "workingExperience")
     private String workingExperience;
 
     @ManyToMany
