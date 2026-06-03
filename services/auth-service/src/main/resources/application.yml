@@ -1,0 +1,19 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: auth-service
+
+user-service:
+  base-url: ${USER_SERVICE_URL:http://localhost:8081}
+
+jwt:
+  secret: ${JWT_SECRET:vprofile-microservices-secret-key-change-in-production}
+  expiration-ms: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

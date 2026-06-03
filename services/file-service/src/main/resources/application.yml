@@ -1,0 +1,22 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: file-service
+  servlet:
+    multipart:
+      max-file-size: 128KB
+      max-request-size: 128KB
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+
+user-service:
+  base-url: ${USER_SERVICE_URL:http://localhost:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

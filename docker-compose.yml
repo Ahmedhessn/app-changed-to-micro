@@ -1,0 +1,129 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: accounts
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin123
+      MYSQL_ROOT_PASSWORD: root123
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  memcached:
+    image: memcached:1.6-alpine
+    ports:
+      - "11211:11211"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: test
+      RABBITMQ_DEFAULT_PASS: test
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.25
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+
+  user-service:
+    build:
+      context: .
+      dockerfile: services/user-service/Dockerfile
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: admin
+      DB_PASSWORD: admin123
+      MEMCACHED_HOST: memcached
+      MEMCACHED_PORT: 11211
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+      - memcached
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: services/auth-service/Dockerfile
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      JWT_SECRET: vprofile-microservices-secret-key-change-in-production-min-32-chars
+    ports:
+      - "8082:8082"
+    depends_on:
+      - user-service
+
+  search-service:
+    build:
+      context: .
+      dockerfile: services/search-service/Dockerfile
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+    ports:
+      - "8083:8083"
+    depends_on:
+      - user-service
+      - elasticsearch
+
+  messaging-service:
+    build:
+      context: .
+      dockerfile: services/messaging-service/Dockerfile
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: test
+      RABBITMQ_PASSWORD: test
+    ports:
+      - "8084:8084"
+    depends_on:
+      - rabbitmq
+
+  file-service:
+    build:
+      context: .
+      dockerfile: services/file-service/Dockerfile
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      FILE_UPLOAD_DIR: /uploads
+    ports:
+      - "8085:8085"
+    volumes:
+      - uploads:/uploads
+    depends_on:
+      - user-service
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    environment:
+      USER_SERVICE_URL: http://user-service:8081
+      AUTH_SERVICE_URL: http://auth-service:8082
+      SEARCH_SERVICE_URL: http://search-service:8083
+      MESSAGING_SERVICE_URL: http://messaging-service:8084
+      FILE_SERVICE_URL: http://file-service:8085
+    ports:
+      - "8080:8080"
+    depends_on:
+      - user-service
+      - auth-service
+      - search-service
+      - messaging-service
+      - file-service
+
+volumes:
+  db_data:
+  uploads:

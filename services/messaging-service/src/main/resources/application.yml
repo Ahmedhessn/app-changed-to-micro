@@ -1,0 +1,19 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: messaging-service
+
+rabbitmq:
+  host: ${RABBITMQ_HOST:localhost}
+  port: ${RABBITMQ_PORT:5672}
+  username: ${RABBITMQ_USERNAME:test}
+  password: ${RABBITMQ_PASSWORD:test}
+  exchange: messages
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
