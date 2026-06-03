@@ -7,6 +7,6 @@ RUN mvn -q -pl services/auth-service -am package -DskipTests
 
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-COPY --from=build /app/services/auth-service/target/auth-service-*.jar app.jar
+COPY --from=build /app/services/auth-service/target/auth-service-2.0.0.jar app.jar
 EXPOSE 8082
 ENTRYPOINT ["java", "-jar", "app.jar"]

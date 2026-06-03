@@ -1,9 +1,6 @@
 # Tuned for small VMs (e.g. Killercoda). Use: docker-compose --profile full up -d --build
 x-java-memory: &java-memory
-  JAVA_TOOL_OPTIONS: -Xms32m -Xmx96m
-
-x-java-limits: &java-limits
-  mem_limit: 256m
+  JAVA_TOOL_OPTIONS: -XX:+UseContainerSupport -Xms64m -Xmx128m
 
 services:
   db:
@@ -52,7 +49,6 @@ services:
       - "9200:9200"
 
   user-service:
-    <<: *java-limits
     build:
       context: .
       dockerfile: services/user-service/Dockerfile
@@ -76,7 +72,6 @@ services:
         condition: service_started
 
   auth-service:
-    <<: *java-limits
     build:
       context: .
       dockerfile: services/auth-service/Dockerfile
@@ -92,7 +87,6 @@ services:
 
   search-service:
     profiles: ["full"]
-    <<: *java-limits
     build:
       context: .
       dockerfile: services/search-service/Dockerfile
@@ -110,7 +104,6 @@ services:
 
   messaging-service:
     profiles: ["full"]
-    <<: *java-limits
     build:
       context: .
       dockerfile: services/messaging-service/Dockerfile
@@ -128,7 +121,6 @@ services:
 
   file-service:
     profiles: ["full"]
-    <<: *java-limits
     build:
       context: .
       dockerfile: services/file-service/Dockerfile
@@ -145,7 +137,6 @@ services:
       - user-service
 
   api-gateway:
-    <<: *java-limits
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile
