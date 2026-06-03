@@ -1,5 +1,9 @@
+# Tuned for small VMs (e.g. Killercoda). Use: docker-compose --profile full up -d --build
 x-java-memory: &java-memory
-  JAVA_TOOL_OPTIONS: -Xms64m -Xmx192m
+  JAVA_TOOL_OPTIONS: -Xms32m -Xmx96m
+
+x-java-limits: &java-limits
+  mem_limit: 256m
 
 services:
   db:
@@ -13,6 +17,7 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./src/main/resources/db_backup.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uadmin", "-padmin123"]
       interval: 5s
@@ -26,6 +31,7 @@ services:
       - "11211:11211"
 
   rabbitmq:
+    profiles: ["full"]
     image: rabbitmq:3-management-alpine
     environment:
       RABBITMQ_DEFAULT_USER: test
@@ -35,15 +41,18 @@ services:
       - "15672:15672"
 
   elasticsearch:
+    profiles: ["full"]
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.25
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms128m -Xmx128m
+      - ES_JAVA_OPTS=-Xms64m -Xmx64m
+    mem_limit: 512m
     ports:
       - "9200:9200"
 
   user-service:
+    <<: *java-limits
     build:
       context: .
       dockerfile: services/user-service/Dockerfile
@@ -67,6 +76,7 @@ services:
         condition: service_started
 
   auth-service:
+    <<: *java-limits
     build:
       context: .
       dockerfile: services/auth-service/Dockerfile
@@ -81,6 +91,8 @@ services:
       - user-service
 
   search-service:
+    profiles: ["full"]
+    <<: *java-limits
     build:
       context: .
       dockerfile: services/search-service/Dockerfile
@@ -97,6 +109,8 @@ services:
       - elasticsearch
 
   messaging-service:
+    profiles: ["full"]
+    <<: *java-limits
     build:
       context: .
       dockerfile: services/messaging-service/Dockerfile
@@ -113,6 +127,8 @@ services:
       - rabbitmq
 
   file-service:
+    profiles: ["full"]
+    <<: *java-limits
     build:
       context: .
       dockerfile: services/file-service/Dockerfile
@@ -129,6 +145,7 @@ services:
       - user-service
 
   api-gateway:
+    <<: *java-limits
     build:
       context: .
       dockerfile: services/api-gateway/Dockerfile
@@ -145,9 +162,6 @@ services:
     depends_on:
       - user-service
       - auth-service
-      - search-service
-      - messaging-service
-      - file-service
 
 volumes:
   db_data:
