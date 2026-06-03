@@ -1,3 +1,6 @@
+x-java-memory: &java-memory
+  JAVA_TOOL_OPTIONS: -Xms64m -Xmx192m
+
 services:
   db:
     image: mysql:8.0
@@ -10,6 +13,12 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uadmin", "-padmin123"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
 
   memcached:
     image: memcached:1.6-alpine
@@ -30,7 +39,7 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - ES_JAVA_OPTS=-Xms128m -Xmx128m
     ports:
       - "9200:9200"
 
@@ -39,27 +48,35 @@ services:
       context: .
       dockerfile: services/user-service/Dockerfile
     environment:
+      <<: *java-memory
       DB_HOST: db
       DB_PORT: 3306
       DB_USER: admin
       DB_PASSWORD: admin123
       MEMCACHED_HOST: memcached
       MEMCACHED_PORT: 11211
+      MEMCACHED_STANDBY_HOST: memcached
+      MEMCACHED_STANDBY_PORT: 11211
     ports:
       - "8081:8081"
+    restart: unless-stopped
     depends_on:
-      - db
-      - memcached
+      db:
+        condition: service_healthy
+      memcached:
+        condition: service_started
 
   auth-service:
     build:
       context: .
       dockerfile: services/auth-service/Dockerfile
     environment:
+      <<: *java-memory
       USER_SERVICE_URL: http://user-service:8081
       JWT_SECRET: vprofile-microservices-secret-key-change-in-production-min-32-chars
     ports:
       - "8082:8082"
+    restart: unless-stopped
     depends_on:
       - user-service
 
@@ -68,11 +85,13 @@ services:
       context: .
       dockerfile: services/search-service/Dockerfile
     environment:
+      <<: *java-memory
       USER_SERVICE_URL: http://user-service:8081
       ELASTICSEARCH_HOST: elasticsearch
       ELASTICSEARCH_PORT: 9200
     ports:
       - "8083:8083"
+    restart: unless-stopped
     depends_on:
       - user-service
       - elasticsearch
@@ -82,12 +101,14 @@ services:
       context: .
       dockerfile: services/messaging-service/Dockerfile
     environment:
+      <<: *java-memory
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: test
       RABBITMQ_PASSWORD: test
     ports:
       - "8084:8084"
+    restart: unless-stopped
     depends_on:
       - rabbitmq
 
@@ -96,10 +117,12 @@ services:
       context: .
       dockerfile: services/file-service/Dockerfile
     environment:
+      <<: *java-memory
       USER_SERVICE_URL: http://user-service:8081
       FILE_UPLOAD_DIR: /uploads
     ports:
       - "8085:8085"
+    restart: unless-stopped
     volumes:
       - uploads:/uploads
     depends_on:
@@ -110,6 +133,7 @@ services:
       context: .
       dockerfile: services/api-gateway/Dockerfile
     environment:
+      <<: *java-memory
       USER_SERVICE_URL: http://user-service:8081
       AUTH_SERVICE_URL: http://auth-service:8082
       SEARCH_SERVICE_URL: http://search-service:8083
@@ -117,6 +141,7 @@ services:
       FILE_SERVICE_URL: http://file-service:8085
     ports:
       - "8080:8080"
+    restart: unless-stopped
     depends_on:
       - user-service
       - auth-service
