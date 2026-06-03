@@ -5,7 +5,9 @@ import com.visualpathit.common.dto.RegisterUserRequest;
 import com.visualpathit.common.dto.UserDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.visualpathit.common.dto.LoginRequest;
@@ -28,8 +30,11 @@ public class UserServiceClient {
                     .body(request)
                     .retrieve()
                     .body(UserDto.class);
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service unavailable");
+        } catch (RestClientException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Cannot reach user-service at register: " + e.getMessage()
+            );
         }
     }
 
@@ -40,10 +45,18 @@ public class UserServiceClient {
                     .body(request)
                     .retrieve()
                     .toBodilessEntity();
-        } catch (org.springframework.web.client.HttpClientErrorException.Unauthorized e) {
+        } catch (HttpClientErrorException.Unauthorized e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "User service unavailable");
+        } catch (HttpClientErrorException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.valueOf(e.getStatusCode().value()),
+                    e.getStatusCode() + " from user-service: " + e.getResponseBodyAsString()
+            );
+        } catch (RestClientException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Cannot reach user-service at authenticate: " + e.getMessage()
+            );
         }
     }
 }
